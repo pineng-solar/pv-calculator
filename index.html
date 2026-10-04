@@ -996,7 +996,7 @@ async function exportReport(){
     const{Document,Paragraph,TextRun,Table,TableRow,TableCell,ImageRun,
       HeadingLevel,AlignmentType,WidthType,Packer,PageBreak,BorderStyle}=window.docx;
 
-    const TW={size:5000,type:WidthType.PERCENTAGE};
+    const TW={size:9360,type:WidthType.DXA};
     const BORDER={style:BorderStyle.SINGLE,size:4,color:'DDDDDD'};
     const BORDERS={top:BORDER,bottom:BORDER,left:BORDER,right:BORDER,insideHorizontal:BORDER,insideVertical:BORDER};
     const GREEN='29ABE2',BLUE='0072BC',DARK='1A1A1A',GRAY='888888';
@@ -1023,7 +1023,7 @@ async function exportReport(){
       new Paragraph({children:[new ImageRun({data:logoBuf,transformation:{width:220,height:54}})],alignment:AlignmentType.CENTER,spacing:{before:1800,after:500}}),
       new Paragraph({children:[new TextRun({text:isEn?'PV & Energy Storage System':'光伏储能系统',size:60,bold:true,color:GREEN})],alignment:AlignmentType.CENTER,spacing:{after:160}}),
       new Paragraph({children:[new TextRun({text:isEn?'Technical Proposal':'技术方案书',size:40,color:'444444'})],alignment:AlignmentType.CENTER,spacing:{after:1000}}),
-      new Table({width:{size:2750,type:WidthType.PERCENTAGE},borders:BORDERS,rows:coverRows.map(([k,v])=>new TableRow({children:[dCell(k,{bold:true,color:'555555'}),dCell(v)]})),alignment:AlignmentType.CENTER}),
+      new Table({width:{size:7200,type:WidthType.DXA},columnWidths:[2400,4800],borders:BORDERS,rows:coverRows.map(([k,v])=>new TableRow({children:[dCell(k,{bold:true,color:'555555'}),dCell(v)]})),alignment:AlignmentType.CENTER}),
       PB()
     ];
 
@@ -1046,7 +1046,7 @@ async function exportReport(){
     const ch1=[
       H1(isEn?'1. Executive Summary':'一、执行摘要'),
       P(summaryText,{after:200}),
-      new Table({width:TW,borders:BORDERS,rows:[
+      new Table({width:TW,columnWidths:[3120,6240],borders:BORDERS,rows:[
         new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}),
         ...metricsRows.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))
       ]}),
@@ -1076,7 +1076,7 @@ async function exportReport(){
     ]}));
     const ch2=[
       H1(isEn?'2. Load Analysis':'二、负载分析'),
-      new Table({width:TW,borders:BORDERS,rows:[
+      new Table({width:TW,columnWidths:[500,2600,1300,700,1000,1000,1260],borders:BORDERS,rows:[
         new TableRow({children:[hCell('#'),hCell(isEn?'Device':'设备名称'),hCell(isEn?'Power(W)':'功率(W)'),hCell(isEn?'Qty':'数量'),hCell(isEn?'Start(h)':'起始时'),hCell(isEn?'Duration(h)':'时长(h)'),hCell(isEn?'Daily kWh':'日用电(kWh)')]}),
         ...loadRows
       ]}),
@@ -1120,13 +1120,13 @@ async function exportReport(){
       H1(isEn?'3. System Design':'三、系统设计'),
       H2(isEn?'3.1 PV Modules':'3.1 光伏组件'),
       P(pvDesc,{after:180}),
-      new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...pvDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
+      new Table({width:TW,columnWidths:[3120,6240],borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...pvDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       H2(isEn?'3.2 Battery Storage':'3.2 储能电池'),
       ...batDesc.split('\n\n').map((s,i)=>P(s.replace(/\n/g,' '),{after:i===0?160:120})),
-      new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...batDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
+      new Table({width:TW,columnWidths:[3120,6240],borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...batDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       H2(isEn?'3.3 Inverter':'3.3 逆变器'),
       P(invDesc,{after:180}),
-      new Table({width:TW,borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...invDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
+      new Table({width:TW,columnWidths:[3120,6240],borders:BORDERS,rows:[new TableRow({children:[hCell(isEn?'Parameter':'参数'),hCell(isEn?'Value':'数值')]}), ...invDesign.map(([k,v])=>new TableRow({children:[dCell(k),dCell(v)]}))]}),
       PB()
     ];
 
@@ -1161,7 +1161,7 @@ async function exportReport(){
     ];
     const ch4q=[
       H1(isEn?'4. Commercial Proposal':'四、商务报价'),
-      new Table({width:TW,borders:BORDERS,rows:priceRows}),
+      new Table({width:TW,columnWidths:[3600,5760],borders:BORDERS,rows:priceRows}),
       new Paragraph({spacing:{before:400,after:100},children:[new TextRun({text:isEn?'* Notes:':'* 备注：',bold:true,size:20})]}),
       P(isEn?'1. Prices above are in USD unless otherwise agreed.':'1. 报价币种以双方协议为准。'),
       P(isEn?'2. Validity of this quotation: 30 days from the date of issue.':'2. 本报价有效期自出具之日起 30 天。'),
