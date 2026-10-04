@@ -1013,7 +1013,7 @@ async function exportReport(){
       [isEn?'Customer:':'客户：',customer],
       [isEn?'Project Location:':'项目地点：',location],
       [isEn?'Solar Resource (PSH):':'峰值日照时数：',c.psh+' h/day (NASA POWER)'],
-      [isEn?'Prepared by:':'编制单位：',,'pineng solar']
+      [isEn?'Prepared by:':'编制单位：','pineng solar'],
       [isEn?'Date:':'日期：',dateStr]
     ];
 
@@ -1223,7 +1223,7 @@ async function exportPDF(){
   const isEn=lang!=='zh';
   const dateRaw=document.getElementById('proposalDate')?.value;
   const dateStr=dateRaw?new Date(dateRaw+'T00:00:00').toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'}):new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
-  const clientName=document.getElementById('clientName')?.value||'—';
+  const clientName=document.getElementById('customerName')?.value||'—';
   const locName=document.getElementById('locDisplay')?.textContent||document.getElementById('cityInput')?.value||'—';
   const psh=(document.getElementById('pshVal')?.textContent||'—');
   const logo=document.getElementById('hLogo')?.src||'';
