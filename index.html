@@ -343,9 +343,7 @@ select:focus,input[type=text]:focus{outline:none;border-color:#29ABE2}
         <div class="sim-caption" id="simCaption"></div>
       </div>
       <div class="export-row" id="exportRow">
-        <button class="export-btn" id="exportBtn" onclick="exportReport()">
-          <i class="ti ti-file-word"></i><span data-k="exportBtn">导出 Word 方案书</span>
-        </button>
+        <button class="export-btn" id="exportBtn" onclick="exportReport()"><i class="ti ti-file-word"></i><span data-k="exportBtn">导出 Word 方案书</span></button><button class="export-btn" id="exportPdfBtn" onclick="exportPDF()" style="background:#E8832A;margin-left:8px"><i class="ti ti-file-type-pdf"></i><span>导出 PDF 方案书</span></button>
         <span class="export-note" data-k="exportNote">包含负载清单、配置参数、能量曲线图及空白报价表</span>
       </div>
       <details class="sim-internal">
@@ -1217,6 +1215,119 @@ if(sessionStorage.getItem('pv_auth')==='1'){
 // 把 logo 注入密码框（复用已内嵌的 logo）
 const hLogo=document.getElementById('hLogo');
 if(hLogo){const pwLogo=document.querySelector('#pwBox .pw-logo');if(pwLogo)pwLogo.src=hLogo.src;}
+
+async function exportPDF(){
+  if(!lastCalc){alert('请先计算配置方案');return;}
+  const c=lastCalc,s=lastSim;
+  const lang=document.getElementById('langSelect')?.value||'zh';
+  const isEn=lang!=='zh';
+  const dateRaw=document.getElementById('proposalDate')?.value;
+  const dateStr=dateRaw?new Date(dateRaw+'T00:00:00').toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'}):new Date().toLocaleDateString(isEn?'en-US':'zh-CN',{year:'numeric',month:'long',day:'numeric'});
+  const clientName=document.getElementById('clientName')?.value||'—';
+  const locName=document.getElementById('locDisplay')?.textContent||document.getElementById('cityInput')?.value||'—';
+  const psh=(document.getElementById('pshVal')?.textContent||'—');
+  const logo=document.getElementById('hLogo')?.src||'';
+  const GREEN='#29ABE2',BLUE='#0072BC';
+
+  const loadRows=c.loads.map((d,i)=>`<tr><td>${i+1}</td><td>${d.name}</td><td>${d.power}</td><td>${d.qty||1}</td><td>${d.start!=null?d.start:0}:00</td><td>${d.hours}</td><td>${((d.power*(d.qty||1)*d.hours)/1000).toFixed(2)}</td></tr>`).join('');
+
+  const metricsRows=[
+    [isEn?'Daily Load':'日均负载',`${c.dailyKwh.toFixed(1)} kWh`],
+    [isEn?'PV Capacity':'光伏装机',`${(c.pvKwp).toFixed(1)} kWp (${c.pvPanels} ${isEn?'panels':'块'})`],
+    [isEn?'Battery Capacity':'储能容量',`${c.batKwh.toFixed(0)} kWh`],
+    [isEn?'Self-sufficiency':'用电自给率',`${s?s.selfSufficiency:'—'}%`],
+    [isEn?'Green Energy Rate':'绿电自用率',`${s?s.selfConsumption:'—'}%`],
+  ].map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  const pvDesign=[
+    [isEn?'Panel Spec':'组件规格',`${c.panelUnit*1000}Wp`],
+    [isEn?'Panel Count':'组件数量',`${c.pvPanels} ${isEn?'pcs':'块'}`],
+    [isEn?'Total Capacity':'总装机容量',`${(c.pvKwp).toFixed(2)} kWp`],
+    [isEn?'System Efficiency':'系统效率',`${(c.eff*100).toFixed(0)}%`],
+    [isEn?'Est. Annual Gen':'预计年发电量',`${(c.pvKwp*c.psh*365*c.eff/1000).toFixed(1)} MWh`],
+  ].map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  const batDesign=[
+    [isEn?'Chemistry':'电池类型',c.batType||'LFP'],
+    [isEn?'Total Capacity':'总容量',`${c.batKwh.toFixed(0)} kWh`],
+    [isEn?'Usable Capacity':'可用容量',`${(c.batKwh*c.dod).toFixed(0)} kWh`],
+    [isEn?'DoD':'放电深度',`${(c.dod*100).toFixed(0)}%`],
+  ].map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  const chartImg=document.getElementById('simChart')?document.getElementById('simChart').toDataURL('image/png'):'';
+
+  const reportHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>${isEn?'PV & Storage Proposal':'光伏储能方案书'}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Microsoft YaHei','PingFang SC',Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:15mm 18mm;max-width:210mm;margin:0 auto}
+.cover{text-align:center;padding:20mm 0 15mm}
+.cover img{height:55px;margin-bottom:16px}
+.cover h1{font-size:26px;color:${GREEN};font-weight:700;margin-bottom:6px}
+.cover h2{font-size:16px;color:#555;font-weight:400;margin-bottom:24px}
+.cover-table{margin:0 auto;border-collapse:collapse;width:65%;min-width:280px}
+.cover-table td{padding:7px 14px;border:1px solid #ddd;font-size:13px}
+.cover-table td:first-child{background:#f5f5f5;font-weight:600;width:38%}
+h2.sec{font-size:15px;color:${GREEN};border-left:4px solid ${GREEN};padding-left:10px;margin:18px 0 8px;page-break-after:avoid}
+h3.sub{font-size:13px;color:${BLUE};font-weight:600;margin:12px 0 5px}
+table.data{width:100%;border-collapse:collapse;margin:6px 0 14px;table-layout:fixed}
+table.data colgroup col:first-child{width:45%}
+table.data colgroup col:last-child{width:55%}
+table.data th{background:${GREEN};color:#fff;padding:7px 10px;font-size:12px;text-align:left}
+table.data td{padding:6px 10px;border:1px solid #ddd;font-size:12px;word-break:break-word}
+table.data tr:nth-child(even) td{background:#f9fafb}
+.chart-img{width:100%;margin:6px 0 14px;border:1px solid #eee;border-radius:4px}
+.pb{page-break-before:always}
+footer{margin-top:20px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:8px}
+@page{margin:18mm 15mm}
+@media print{.pb{page-break-before:always}}
+</style></head><body>
+<div class="cover">
+${logo?`<img src="${logo}" alt="logo">`:''}
+<h1>${isEn?'PV & Energy Storage System':'光伏储能系统'}</h1>
+<h2>${isEn?'Technical Proposal':'技术方案书'}</h2>
+<table class="cover-table">
+<tr><td>${isEn?'Client:':'客户：'}</td><td>${clientName}</td></tr>
+<tr><td>${isEn?'Location:':'项目地点：'}</td><td>${locName}</td></tr>
+<tr><td>${isEn?'Peak Sun Hours:':'峰值日照时数：'}</td><td>${psh} h/day</td></tr>
+<tr><td>${isEn?'Prepared by:':'编制单位：'}</td><td>pineng solar</td></tr>
+<tr><td>${isEn?'Date:':'日期：'}</td><td>${dateStr}</td></tr>
+</table></div>
+
+<div class="pb">
+<h2 class="sec">${isEn?'1. System Overview':'一、系统概览'}</h2>
+<table class="data"><colgroup><col><col></colgroup>
+<tr><th>${isEn?'Parameter':'参数'}</th><th>${isEn?'Value':'数值'}</th></tr>
+${metricsRows}</table>
+${chartImg?`<h3 class="sub">${isEn?'24-Hour Simulation':'24小时能量流模拟'}</h3><img class="chart-img" src="${chartImg}">`:''}</div>
+
+<div class="pb">
+<h2 class="sec">${isEn?'2. Load Analysis':'二、负载分析'}</h2>
+<table class="data" style="table-layout:fixed">
+<colgroup><col style="width:5%"><col style="width:28%"><col style="width:13%"><col style="width:8%"><col style="width:11%"><col style="width:12%"><col style="width:13%"></colgroup>
+<tr><th>#</th><th>${isEn?'Device':'设备名称'}</th><th>${isEn?'Power(W)':'功率(W)'}</th><th>${isEn?'Qty':'数量'}</th><th>${isEn?'Start':'开始'}</th><th>${isEn?'Dur(h)':'时长(h)'}</th><th>${isEn?'kWh/day':'日用电'}</th></tr>
+${loadRows}</table></div>
+
+<div class="pb">
+<h2 class="sec">${isEn?'3. System Design':'三、系统设计'}</h2>
+<h3 class="sub">${isEn?'3.1 PV System':'3.1 光伏系统'}</h3>
+<table class="data"><colgroup><col><col></colgroup>
+<tr><th>${isEn?'Parameter':'参数'}</th><th>${isEn?'Value':'数值'}</th></tr>
+${pvDesign}</table>
+<h3 class="sub">${isEn?'3.2 Battery':'3.2 储能电池'}</h3>
+<table class="data"><colgroup><col><col></colgroup>
+<tr><th>${isEn?'Parameter':'参数'}</th><th>${isEn?'Value':'数值'}</th></tr>
+${batDesign}</table></div>
+
+<footer>pineng solar &nbsp;|&nbsp; ${dateStr}</footer>
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){alert('请允许弹出窗口后重试');return;}
+  w.document.write(reportHTML);
+  w.document.close();
+  setTimeout(()=>w.print(),900);
+}
 </script>
 </body>
 </html>
